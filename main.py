@@ -1,4 +1,5 @@
 import re
+import random
 import pandas as pd
 from time import sleep
 from bs4 import BeautifulSoup
@@ -7,6 +8,17 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from config.config import Config
+import requests
+import time
+
+# :: Randomly select a user agent
+user_agents = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Firefox/89.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Edge/91.0.864.64",
+]
+random_user_agent = random.choice(user_agents)
 
 
 def extract_text(tag, class_name=None):
@@ -74,40 +86,82 @@ def extract_data_from_card(company):
     }
 
 
+def fetch_page_with_retry(url, max_retries=3):
+    """Fetch a page with retry logic."""
+    retries = 0
+    while retries < max_retries:
+        try:
+            response = requests.get(url)  # Make an HTTP request to fetch the page
+            if response.status_code == 200:
+                return response.content  # Return the content if successful
+            else:
+                raise Exception(f"Failed with status code {response.status_code}")
+        except Exception as e:
+            retries += 1
+            print(f"Error: {e}. Retrying... ({retries}/{max_retries})")
+            sleep(random.uniform(5, 10))  # Sleep with random backoff
+    raise Exception(f"Max retries reached for {url}")
+
+
 def scrape_page(url, driver):
     """Scrape a single page of companies."""
-    driver.get(url)
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-    companies = soup.find_all("div", class_="companyCardWrapper")
-    return [extract_data_from_card(company) for company in companies]
+    try:
+        driver.get(url)  # Using Selenium to load the page in the browser
+        soup = BeautifulSoup(
+            driver.page_source, "html.parser"
+        )  # Parse the page with BeautifulSoup
+        companies = soup.find_all(
+            "div", class_="companyCardWrapper"
+        )  # Find all company cards
+        return [extract_data_from_card(company) for company in companies]
+    except Exception as e:
+        print(f"Error while scraping page {url}: {e}")
+        return []  # Return empty list in case of error
 
 
 # Set up Chrome options
 options = Options()
 options.add_argument("--disable-blink-features=AutomationControlled")
 options.add_argument("--window-size=1920,1200")
+options.add_argument(f"user-agent={random_user_agent}")
 
 # Initialize WebDriver
 driver_path = ChromeDriverManager().install()
 service = Service(driver_path)
 driver = webdriver.Chrome(service=service, options=options)
 
-# Main scraping loop
-data = []
-try:
-    for p in range(1, 2):
-        url = f"{Config.URL}&page={p}"
-        try:
-            page_data = scrape_page(url, driver)
-            data.extend(page_data)
-            print(f"Page {p} scraped successfully.")
-        except Exception as e:
-            print(f"Error scraping page {p}: {e}")
-        sleep(1)
-finally:
-    driver.quit()
+# Initialize a CSV file to store data progressively
+output_path = "data/scrapped/data.csv"
+df_columns = [
+    "company_name",
+    "rating",
+    "reviews",
+    "jobs",
+    "interviews",
+    "highly_rated_for",
+    "critically_rated_for",
+]
 
-# Save data to CSV
-df = pd.DataFrame(data)
-df.to_csv("data/scrapped/data.csv", index=False)
-print("Data extraction completed.")
+# Open the CSV file for appending and writing headers if necessary
+with open(output_path, mode="a", newline="", encoding="utf-8") as file:
+    writer = pd.DataFrame(columns=df_columns)
+
+    # Main scraping loop
+    try:
+        for p in range(1, 100):  # Scraping 100 pages (modify as needed)
+            url = f"{Config.URL}&page={p}"
+            try:
+                page_data = scrape_page(url, driver)
+                if page_data:
+                    page_df = pd.DataFrame(page_data)
+                    page_df.to_csv(
+                        file, header=file.tell() == 0, index=False
+                    )  # Write data to CSV incrementally
+                    print(f"Page {p} scraped and data saved successfully.")
+            except Exception as e:
+                print(f"Error scraping page {p}: {e}")
+            sleep(random.uniform(2, 5))  # Sleep to avoid overloading the server
+    finally:
+        driver.quit()  # Quit the driver when done
+
+print(f"Data extraction completed and saved to {output_path}.")
