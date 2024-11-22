@@ -1,3 +1,6 @@
+# Custom gitignore file for Python projects
+data/scrapped/
+
 ### JupyterNotebooks ###
 # gitignore template for Jupyter Notebooks
 # website: http://jupyter.org/
