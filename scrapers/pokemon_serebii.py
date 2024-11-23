@@ -9,11 +9,12 @@ def extract_table_rows(soup: BeautifulSoup) -> List:
     table = soup.find("table", class_="dextable")
     if not table:
         return []
-    return table.find_all("tr")[2:]  # Skip header rows
+    # :: Skip header rows
+    return table.find_all("tr")[2:]
 
 
 def detect_table_structure(soup: BeautifulSoup) -> Dict:
-    """Detects the structure of the table headers to determine column layout."""
+    # :: Detects the structure of the table headers to determine column layout
     table = soup.find("table", class_="dextable")
     if not table:
         return {}
@@ -29,35 +30,35 @@ def detect_table_structure(soup: BeautifulSoup) -> Dict:
 
 
 def parse_row_data(row: BeautifulSoup, table_structure: Dict) -> Dict:
-    """Parses a single row to extract Pokémon details with consistent column handling."""
+    # :: Parses a single row to extract Pokémon details with consistent column handling.
     cols = row.find_all("td", class_="fooinfo")
     if len(cols) < table_structure["required_cols"]:
         return {}
 
     try:
-        # Basic info
+        # :: Basic info
         no = cols[0].text.strip().lstrip("#").zfill(4)
         name = cols[2].find("a").text.strip()
         types = [
             img["src"].split("/")[-1].split(".")[0] for img in cols[3].find_all("img")
         ]
 
-        # Extract base stats
+        # :: Extract base stats
         base_stats = [stat.text.strip() if stat else "" for stat in cols[4:10]]
 
-        # Ensure we have enough stats
+        # :: Ensure we have enough stats
         while len(base_stats) < 6:
             base_stats.append("")
 
-        # Handle Special vs. S.Att/S.Def split
+        # :: Handle Special vs. S.Att/S.Def split
         if table_structure["has_special"]:
             special_value = base_stats[3]
             stats_dict = {
                 "HP": base_stats[0],
                 "Att": base_stats[1],
                 "Def": base_stats[2],
-                "S.Att": special_value,  # Map Special to S.Att only
-                "S.Def": None,  # Set S.Def to None for Gen 1 Pokemon
+                "S.Att": special_value,  # :: Map Special to S.Att only
+                "S.Def": None,  # :: Set S.Def to None for Gen 1 Pokemon
                 "Spd": base_stats[4],
             }
         else:
@@ -70,7 +71,7 @@ def parse_row_data(row: BeautifulSoup, table_structure: Dict) -> Dict:
                 "Spd": base_stats[5],
             }
 
-        # Add abilities if present
+        # :: Add abilities if present
         abilities = ""
         if table_structure["has_abilities"] and len(cols) > 10:
             abilities = cols[10].text.strip()
@@ -88,7 +89,7 @@ def parse_row_data(row: BeautifulSoup, table_structure: Dict) -> Dict:
 
 
 def fetch_and_extract_pokemon_data(url: str) -> List[Dict]:
-    """Fetches and extracts Pokémon data with consistent column handling."""
+    # :: Fetches and extracts Pokémon data with consistent column handling
     try:
         response = requests.get(url)
         response.raise_for_status()
@@ -100,11 +101,12 @@ def fetch_and_extract_pokemon_data(url: str) -> List[Dict]:
             print(f"Could not detect table structure for {url}")
             return []
 
-        # Extract rows and parse data
+        # :: Extract rows and parse data
         rows = extract_table_rows(soup)
         pokemon_data = [parse_row_data(row, table_structure) for row in rows]
 
-        return [data for data in pokemon_data if data]  # Filter out empty entries
+        # :: Filter out empty entries
+        return [data for data in pokemon_data if data]
 
     except requests.RequestException as e:
         print(f"Request error for {url}: {e}")
@@ -114,7 +116,7 @@ def fetch_and_extract_pokemon_data(url: str) -> List[Dict]:
 
 
 def save_to_csv(data: List[Dict], output_path: str) -> None:
-    """Saves Pokémon data with consistent columns to CSV."""
+    # :: Saves Pokémon data with consistent columns to CSV.
     if not data:
         print("No data available to save.")
         return
@@ -138,7 +140,7 @@ def save_to_csv(data: List[Dict], output_path: str) -> None:
             if col not in df.columns:
                 df[col] = ""
 
-        # Reorder columns to ensure consistent output
+        # :: Reorder columns to ensure consistent output
         df = df[expected_columns]
         df.to_csv(output_path, index=False)
         print(f"Data saved successfully to {output_path}")
@@ -182,7 +184,7 @@ def main() -> None:
             print(f"No data scraped from {url}")
 
     if all_pokemon_data:
-        output_path = Config.get_output_path("Pokemon")
+        output_path = Config.get_output_path("pokemon")
         save_to_csv(all_pokemon_data, output_path)
     else:
         print("No data was scraped. Please check the webpage structure or URLs.")
