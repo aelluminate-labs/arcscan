@@ -45,10 +45,10 @@ Before running the script, you need to configure the `config.config.Config` clas
 
 Arcscan includes different modules for scraping data from various sources. 
 
-| Module | Description | Command To Run | Output | 
-| ------ | ----------- | ------- | ------ |
-| **Pokémon Serebii Scraper** | Scrapes Pokémon data from Serebii.net | `python -m scrapers.pokemon_serebii` | `$ python -m scrapers.pokemon_serebii` | `data/scrapped/pokemon_<timestamp>.csv.` |
-| **AmbitionBox Scraper** | Scrapes company reviews from AmbitionBox | `python -m scrapers.ambitionbox` | `$ python -m scrapers.ambitionbox` | `data/scrapped/ambitionbox_<timestamp>.csv.` |
+| Module | URL Link | Description | Command To Run | Output |
+| ------ | ----------- | ------- | ------ | ------ |
+| **Pokémon Serebii Scraper** | [www.serebii.net](https://www.serebii.net/) | Scrapes Pokémon data from Serebii.net | `python -m scrapers.pokemon_serebii` | `data/scrapped/pokemon_<timestamp>.csv.` |
+| **AmbitionBox Scraper** | [ambitionbox.com](https://www.ambitionbox.com/) | Scrapes company reviews from AmbitionBox | `python -m scrapers.ambitionbox` | `data/scrapped/ambitionbox_<timestamp>.csv.` |
 
 
 ## License
