@@ -1,6 +1,7 @@
 # Arcscan
 
-Arcscan is a web scraping tool designed to automate data collection processes from various online sources. It efficiently extracts valuable information from websites, making it ideal for web research, data analysis, and building datasets from publicly available web content.
+Arcscan is a versatile web scraping tool designed to automate data collection processes from various online sources. It efficiently extracts valuable information from websites, making it ideal for web research, data analysis, and building datasets from publicly available web content.
+
 
 ###### NOTE: This project is currently in the development stage and will be updated frequently.
 
@@ -42,18 +43,18 @@ Before running the script, you need to configure the `config.config.Config` clas
 
 ## Usage
 
-To run the scraping script, execute the following command:
+Arcscan includes different modules for scraping data from various sources. 
 
-```bash
-python -m main
-```
+| Module | Description | Command To Run | Output | 
+| ------ | ----------- | ------- | ------ |
+| **Pokémon Serebii Scraper** | Scrapes Pokémon data from Serebii.net | `python -m scrapers.pokemon_serebii` | `$ python -m scrapers.pokemon_serebii` | `data/scrapped/pokemon_<timestamp>.csv.` |
+| **AmbitionBox Scraper** | Scrapes company reviews from AmbitionBox | `python -m scrapers.ambitionbox` | `$ python -m scrapers.ambitionbox` | `data/scrapped/ambitionbox_<timestamp>.csv.` |
+
 
 ## License
 
-This project is licensed under the [MIT License](/LICENSE). See the LICENSE file for more details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-
-The script will start scraping data from the specified URL and save the results in `data/scrapped/data.csv`.
 
 ## Acknowledgments
 
